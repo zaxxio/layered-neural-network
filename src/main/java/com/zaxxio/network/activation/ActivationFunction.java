@@ -25,5 +25,5 @@
 package com.zaxxio.network.activation;
 
 public enum ActivationFunction {
-    TANH, LEAKY_RELU, SIGMOID, RELU, SWISH, SOFTMAX
+    TANH, LEAKY_RELU, SIGMOID, RELU, SWISH
 }
