@@ -60,7 +60,7 @@ final MultiLayerConfiguration config = new MultiLayerConfiguration.Builder()
 <dependencies>
     <dependency>
         <groupId>com.github.zaxxio</groupId>
-        <artifactId>Layered-Neural-Network</artifactId>
+        <artifactId>layered-neural-network</artifactId>
         <version>v1.0.4</version>
     </dependency>
 </dependencies>
@@ -74,7 +74,7 @@ allprojects {
     }
 }
 dependencies {
-    implementation 'com.github.zaxxio:Layered-Neural-Network:v1.0.4'
+    implementation 'com.github.zaxxio:layered-neural-network:v1.0.4'
 }
 ```
 
