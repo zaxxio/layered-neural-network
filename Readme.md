@@ -23,6 +23,7 @@ final MultiLayerConfiguration config = new MultiLayerConfiguration.Builder()
                         .activation(ActivationFunction.LEAKY_RELU)
                         .build())
                 .list()
+                .maxEpoch(100000)
                 .minError(0.01)
                 .server(true) // port 8080 for visualizing the network
                 .build();
