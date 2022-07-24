@@ -1,4 +1,4 @@
-## Multi Layered Neural Network Built in Java
+## Multi Layered Neural Network Library Built in Java
 This is a Multi Layered Neural Network Library made in java for experimental purposes in January-March 2020 which is similar to deeplearning4j. Let's peek into the code
 ```java
       // MultiLayerConfiguration for Neural Network Structure
