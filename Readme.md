@@ -8,7 +8,7 @@ final MultiLayerConfiguration config = new MultiLayerConfiguration.Builder()
                 .optimizationAlgo(OptimizationAlgo.STOCHASTIC_GRADIENT_DESCENT) // Change SGD or GD
                 .momentum(0.5)
                 .updater(0.001) // learning rate or updater
-                .layer(0, new InputLayer.Builder().nIn(2) // InputSize fanInput
+                .layer(0, new InputLayer.Builder().nIn(2) // InputSize fanIn
                         .build())
                 .layer(1, new DenseLayer.Builder().nIn(25) // DenseLayer 
                         .activation(ActivationFunction.LEAKY_RELU)
@@ -19,7 +19,7 @@ final MultiLayerConfiguration config = new MultiLayerConfiguration.Builder()
                 .layer(3, new DenseLayer.Builder().nIn(15) // DenseLayer
                         .activation(ActivationFunction.LEAKY_RELU)
                         .build())
-                .layer(4, new OutputLayer.Builder().nOut(1) // OutputSize fanout
+                .layer(4, new OutputLayer.Builder().nOut(1) // OutputSize fanOut
                         .activation(ActivationFunction.LEAKY_RELU)
                         .build())
                 .list()
