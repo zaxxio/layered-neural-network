@@ -50,6 +50,7 @@ final MultiLayerConfiguration config = new MultiLayerConfiguration.Builder()
 
 
 ## Dependency Maven
+## Please Update the NanoHTTPD Library if throws outdated.
 ```xml
 <!-- For Repository Pulling -->
 <repositories>
