@@ -43,7 +43,7 @@ final MultiLayerConfiguration config = new MultiLayerConfiguration.Builder()
 ### Removed
 * Removed The ScalarNormalization and CSVParser for custom implementation.
 * Removed Gradient Cliping Unstable Performance.
-![Screenshot](./assets/Screenshot 2022-11-07 at 8.49.06 PM.png)
+![Screenshot](https://raw.githubusercontent.com/zaxxio/layered-neural-network/master/assets/Screenshot%202022-11-07%20at%208.49.23%20PM.png)
 
 ### Visualization of Multi Layered Network
 ![Screenshot](./assets/Screenshot-1.png)
