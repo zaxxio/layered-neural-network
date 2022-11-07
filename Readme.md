@@ -50,7 +50,6 @@ final MultiLayerConfiguration config = new MultiLayerConfiguration.Builder()
 
 
 ## Dependency Maven
-## Please Update the NanoHTTPD Library if throws outdated.
 ```xml
 <!-- For Repository Pulling -->
 <repositories>
@@ -80,6 +79,7 @@ dependencies {
     implementation 'com.github.zaxxio:layered-neural-network:v1.0.4'
 }
 ```
+## Please Update the NanoHTTPD Library if throws outdated.
 
 Thank you.
 ### MIT Licence
