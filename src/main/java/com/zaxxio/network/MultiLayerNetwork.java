@@ -39,6 +39,7 @@ import lombok.Setter;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import java.io.Serializable;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -46,7 +47,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 @Getter
 @Setter
-public class MultiLayerNetwork {
+public class MultiLayerNetwork implements Serializable {
 
     private static final Logger logger = LogManager.getLogger(MultiLayerNetwork.class);
 
@@ -212,7 +213,6 @@ public class MultiLayerNetwork {
         }
         return output;
     }
-
 
     public void addScoreListener(ScoreListener scoreListener) {
         this.scoreListener = scoreListener;

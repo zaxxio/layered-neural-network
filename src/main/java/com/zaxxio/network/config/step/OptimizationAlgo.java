@@ -25,5 +25,5 @@
 package com.zaxxio.network.config.step;
 
 public enum OptimizationAlgo {
-    STOCHASTIC_GRADIENT_DESCENT,GRADIENT_DESCENT
+    STOCHASTIC_GRADIENT_DESCENT, GRADIENT_DESCENT
 }

@@ -35,10 +35,6 @@ public class DenseLayer extends Layer {
     protected int nOut;
     protected ActivationFunction activationFunction;
 
-    private DenseLayer() {
-
-    }
-
     public DenseLayer(Builder builder) {
         this.layerId = UUID.randomUUID();
         this.nIn = builder.nIn;
