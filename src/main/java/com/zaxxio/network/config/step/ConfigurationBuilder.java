@@ -50,7 +50,7 @@ public class ConfigurationBuilder implements WeightInitConfigStep, MomentumConfi
     private WeightInit weightInit;
     private double momentum;
     private OptimizationAlgo optimizationAlgo;
-    private boolean serverEnabled;
+    private boolean realTimeEnabled;
     private double maxEpoch;
     private double minError;
     private double updater;
@@ -83,22 +83,8 @@ public class ConfigurationBuilder implements WeightInitConfigStep, MomentumConfi
     }
 
     @Override
-    public ConfigurationBuilderStep server(boolean enabled) {
-        this.serverEnabled = enabled;
-        if (enabled) {
-            StringBuilder builder = new StringBuilder();
-            for (int i = 0; i < layerList.size() - 1; i++) {
-                builder.append(layerList.get(i).getnIn()).append(",");
-            }
-            builder.append(layerList.get(layerList.size() - 1).getnOut());
-            MultiLayerNetworkView.DATA_NETWORK = builder.toString();
-            network = new MultiLayerNetworkView(8080);
-            try {
-                network.start(NanoHTTPD.SOCKET_READ_TIMEOUT, false);
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
+    public ConfigurationBuilderStep realtime(boolean realTimeEnabled) {
+        this.realTimeEnabled = realTimeEnabled;
         return this;
     }
 

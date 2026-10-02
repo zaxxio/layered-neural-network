@@ -31,7 +31,7 @@ public class Driver {
     public static void main(String[] args){
         final MultiLayerConfiguration config = new MultiLayerConfiguration.Builder()
                 .activation(ActivationFunction.LEAKY_RELU)
-                .weightInit(WeightInit.XAVIER)
+                .weightInit(WeightInit.HE)
                 .optimizationAlgo(OptimizationAlgo.STOCHASTIC_GRADIENT_DESCENT)
                 .momentum(0.4)
                 .updater(0.001)
@@ -51,7 +51,7 @@ public class Driver {
                         .build())
                 .list()
                 .minError(0.001)
-                .server(true)
+                .realtime(true)
                 .build();
 
         MultiLayerNetwork model = new MultiLayerNetwork(config);

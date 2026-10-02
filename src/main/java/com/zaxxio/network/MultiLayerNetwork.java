@@ -31,6 +31,8 @@ import com.zaxxio.network.config.ScoreListener;
 import com.zaxxio.network.config.step.OptimizationAlgo;
 import com.zaxxio.network.data.MLData;
 import com.zaxxio.network.data.MLDataSet;
+import com.zaxxio.network.listener.RealtimeEvent;
+import com.zaxxio.network.listener.RealtimeListener;
 import com.zaxxio.network.model.Layer;
 import com.zaxxio.network.model.Neuron;
 import com.zaxxio.network.weight.impl.WeightInitializerImpl;
@@ -41,9 +43,6 @@ import org.apache.logging.log4j.Logger;
 
 import java.io.Serializable;
 import java.util.*;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.atomic.AtomicInteger;
 
 @Getter
 @Setter
@@ -52,9 +51,9 @@ public class MultiLayerNetwork implements Serializable {
     private static final Logger logger = LogManager.getLogger(MultiLayerNetwork.class);
 
     private MultiLayerConfiguration config;
-    private double error = 1;
+    private transient RealtimeListener realtimeListener;
+    private double error = 1.0;
     private ScoreListener scoreListener;
-    private ExecutorService executor = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
     private Random random = new Random();
 
     private List<Neuron> inputLayer;
@@ -64,7 +63,7 @@ public class MultiLayerNetwork implements Serializable {
 
     public MultiLayerNetwork(MultiLayerConfiguration config) {
         this.config = config;
-        if (config.isServer()) {
+        if (config.isRealTimeEnabled()) {
             logger.info("Server running : http://localhost:8080");
         }
     }
@@ -74,43 +73,44 @@ public class MultiLayerNetwork implements Serializable {
         this.inputLayer = new ArrayList<>();
         this.hiddenLayers = new ArrayList<>();
         this.outputLayer = new ArrayList<>();
+
         for (int i = 0; i < layers.size(); i++) {
+            Layer layer = layers.get(i);
+
             if (i == 0) {
-                for (int x = 0; x < layers.get(i).getnIn(); x++) {
+                // Input Layer
+                for (int x = 0; x < layer.getnIn(); x++) {
                     this.inputLayer.add(new Neuron());
                 }
             } else if (i < layers.size() - 1) {
-                if (i == 1) {
-                    List<Neuron> hiddenLayer = new ArrayList<>();
-                    for (int x = 0; x < layers.get(i).getnIn(); x++) {
-                        int nIn = layers.get(i - 1).getnIn();
-                        int nOut = layers.get(i).getnOut();
-                        IActivationFunction function = layers.get(i).getActivationFunctionInLayer();
-                        ActivationFunction functionEnum = layers.get(i).getActivationFunction();
-                        WeightInitializerImpl initializer = new WeightInitializerImpl(nIn, nOut, config.getWeightInit());
-                        hiddenLayer.add(new Neuron(this.inputLayer, function, functionEnum, initializer));
-                    }
-                    hiddenLayers.add(hiddenLayer);
-                } else {
-                    List<Neuron> hiddenLayer = new ArrayList<>();
-                    for (int x = 0; x < layers.get(i).getnIn(); x++) {
-                        int nOut = layers.get(i).getnOut();
-                        IActivationFunction function = layers.get(i).getActivationFunctionInLayer();
-                        int nIn = layers.get(i - 1).getnIn();
-                        ActivationFunction functionEnum = layers.get(i).getActivationFunction();
-                        WeightInitializerImpl initializer = new WeightInitializerImpl(nIn, nOut, config.getWeightInit());
-                        hiddenLayer.add(new Neuron(this.hiddenLayers.get(i - 2), function, functionEnum, initializer));
-                    }
-                    hiddenLayers.add(hiddenLayer);
+                // Hidden Layers
+                int nIn = layers.get(i - 1).getnIn();
+                int nOut = layer.getnOut();
+                IActivationFunction function = layer.getActivationFunctionInLayer();
+                ActivationFunction functionEnum = layer.getActivationFunction();
+                WeightInitializerImpl initializer = new WeightInitializerImpl(nIn, nOut, config.getWeightInit());
+
+                List<Neuron> prevLayer = (i == 1) ? this.inputLayer : this.hiddenLayers.get(i - 2);
+                List<Neuron> hiddenLayer = new ArrayList<>();
+
+                for (int x = 0; x < layer.getnIn(); x++) {
+                    hiddenLayer.add(new Neuron(prevLayer, function, functionEnum, initializer));
                 }
+                hiddenLayers.add(hiddenLayer);
             } else {
-                for (int x = 0; x < layers.get(i).getnOut(); x++) {
-                    int nOut = layers.get(i).getnOut();
-                    int nIn = layers.get(i - 1).getnIn();
-                    IActivationFunction function = layers.get(i).getActivationFunctionInLayer();
-                    ActivationFunction functionEnum = layers.get(i).getActivationFunction();
-                    WeightInitializerImpl initializer = new WeightInitializerImpl(nIn, nOut, config.getWeightInit());
-                    this.outputLayer.add(new Neuron(hiddenLayers.get(hiddenLayers.size() - 1), function, functionEnum, initializer));
+                // Output Layer
+                int nIn = layers.get(i - 1).getnIn();
+                int nOut = layer.getnOut();
+                IActivationFunction function = layer.getActivationFunctionInLayer();
+                ActivationFunction functionEnum = layer.getActivationFunction();
+                WeightInitializerImpl initializer = new WeightInitializerImpl(nIn, nOut, config.getWeightInit());
+
+                List<Neuron> prevLayer = hiddenLayers.isEmpty()
+                        ? this.inputLayer
+                        : hiddenLayers.get(hiddenLayers.size() - 1);
+
+                for (int x = 0; x < nOut; x++) {
+                    this.outputLayer.add(new Neuron(prevLayer, function, functionEnum, initializer));
                 }
             }
         }
@@ -118,82 +118,80 @@ public class MultiLayerNetwork implements Serializable {
     }
 
     private double calcError(double[] targets) {
-        AtomicInteger i = new AtomicInteger();
-        return getOutputLayer().stream().mapToDouble(neuron -> Math.abs(neuron.error(targets[i.getAndIncrement()]))).sum();
+        double sum = 0.0;
+        for (int i = 0; i < outputLayer.size(); i++) {
+            sum += Math.abs(outputLayer.get(i).error(targets[i]));
+        }
+        return sum;
     }
 
     public void backward(double... targets) {
-        if (targets.length != getOutputLayer().size()) try {
-            throw new NeuralException("Output dimension's does not match.");
-        } catch (NeuralException e) {
-            e.printStackTrace();
+        for (int i = 0; i < outputLayer.size(); i++) {
+            outputLayer.get(i).calculateGradient(targets[i], error);
         }
-        AtomicInteger i = new AtomicInteger();
-        for (Neuron neuron : this.getOutputLayer()) {
-            neuron.calculateGradient(targets[i.getAndIncrement()], error);
+
+        List<List<Neuron>> reversed = new ArrayList<>(hiddenLayers);
+        Collections.reverse(reversed);
+
+        for (List<Neuron> layer : reversed) {
+            for (Neuron neuron : layer) {
+                neuron.calculateGradient();
+            }
         }
-        Collections.reverse(getHiddenLayers());
-        for (List<Neuron> hiddenLayer : getHiddenLayers()) {
-            for (Neuron neuron : hiddenLayer) {
+
+        for (List<Neuron> layer : hiddenLayers) {
+            for (Neuron neuron : layer) {
                 neuron.updateConnections(config.getUpdater(), config.getMomentum());
             }
         }
-        Collections.reverse(getHiddenLayers());
-        for (Neuron neuron : getOutputLayer()) {
+
+        for (Neuron neuron : outputLayer) {
             neuron.updateConnections(config.getUpdater(), config.getMomentum());
         }
+
+        realtimeUpdate(RealtimeEvent.BACKWARD);
     }
 
     public void forward(double... inputs) {
-        if (inputs.length != getInputLayer().size()) try {
-            throw new NeuralException("Input dimension's does not match.");
-        } catch (NeuralException e) {
-            e.printStackTrace();
-            System.exit(0);
+        if (inputs.length != getInputLayer().size()) {
+            throw new IllegalArgumentException(
+                String.format("Input dimension mismatch: expected %d, got %d", getInputLayer().size(), inputs.length)
+            );
         }
-        int i = 0;
-        for (Neuron neuron : getInputLayer()) {
-            neuron.setOutput(inputs[i++]);
+
+        for (int i = 0; i < getInputLayer().size(); i++) {
+            getInputLayer().get(i).setOutput(inputs[i]);
         }
+
         for (List<Neuron> hiddenLayer : getHiddenLayers()) {
             for (Neuron neuron : hiddenLayer) {
                 neuron.calculateOutput();
             }
         }
+
         for (Neuron neuron : getOutputLayer()) {
             neuron.calculateOutput();
         }
+
+        realtimeUpdate(RealtimeEvent.FORWARD);
     }
 
     public void fit(MLDataSet dataSets) {
-        double epochIndex = 0;
-        double startTime = System.currentTimeMillis();
-        while (config.getMinError() < error) {
+        long startTime = System.currentTimeMillis();
+        for (int epoch = 0; error > config.getMinError(); epoch++) {
             if (config.getOptimizationAlgo() == OptimizationAlgo.STOCHASTIC_GRADIENT_DESCENT) {
                 Collections.shuffle(dataSets.getDataList());
             }
             List<Double> errors = new ArrayList<>();
-            if (scoreListener != null) {
-                if (epochIndex % scoreListener.getStep() == 0) {
-                    scoreListener.setEpoch(epochIndex);
-                    scoreListener.setError(error);
-                    executor.execute(scoreListener);
-                }
-            }
-            if (config.getMaxEpoch() != 0 && epochIndex == config.getMaxEpoch()) break;
-            if (error < config.getMinError()) break;
             for (MLData dataSet : dataSets.getDataList()) {
                 forward(dataSet.getInputs());
                 backward(dataSet.getTargets());
                 errors.add(calcError(dataSet.getTargets()));
             }
-            OptionalDouble average = errors.stream().mapToDouble(a -> a).average();
-            error = average.isPresent() ? average.getAsDouble() : 0;
-            epochIndex++;
+            error = errors.stream().mapToDouble(Double::doubleValue).average().orElse(0.0);
+            if (config.getMaxEpoch() != 0 && epoch + 1 >= config.getMaxEpoch()) break;
         }
-        long endTime = System.currentTimeMillis();
-        logger.info("Training Finished : " + ((endTime - startTime) / 1000) + "s");
-        executor.shutdown();
+        logger.info(String.format("Training Finished : %.3fs", (System.currentTimeMillis() - startTime) / 1000.0));
     }
 
     public double[] predict(double... inputs) {
@@ -202,20 +200,25 @@ public class MultiLayerNetwork implements Serializable {
         for (int i = 0; i < output.length; i++) {
             output[i] = getOutputLayer().get(i).getOutput();
         }
+        realtimeListener.onUpdate(this, RealtimeEvent.PREDICT);
         return output;
     }
 
     public double[] predict(MLData inputs) {
-        forward(inputs.getInputs());
-        double[] output = new double[getOutputLayer().size()];
-        for (int i = 0; i < getOutputLayer().size(); i++) {
-            output[i] = getOutputLayer().get(i).getOutput();
-        }
-        return output;
+        return predict(inputs.getInputs());
     }
 
     public void addScoreListener(ScoreListener scoreListener) {
         this.scoreListener = scoreListener;
     }
 
+    public void setRealtimeListener(RealtimeListener realtimeListener) {
+        this.realtimeListener = realtimeListener;
+    }
+
+    private void realtimeUpdate(RealtimeEvent event) {
+        if (config.isRealTimeEnabled() && realtimeListener != null) {
+            realtimeListener.onUpdate(this, event);
+        }
+    }
 }

@@ -45,21 +45,19 @@ public class MultiLayerConfiguration {
     private WeightInit weightInit;
     private double momentum;
     private OptimizationAlgo optimizationAlgo;
-    private boolean server;
+    private boolean isRealTimeEnabled;
     private double maxEpoch;
     private double minError;
     private double updater;
 
     private List<Layer> layers;
 
-
-
     public MultiLayerConfiguration(ConfigurationBuilder configurationBuilder) {
         this.activationFunction = ConfigurationBuilder.activationFunction;
         this.weightInit = configurationBuilder.getWeightInit();
         this.momentum = configurationBuilder.getMomentum();
         this.optimizationAlgo = configurationBuilder.getOptimizationAlgo();
-        this.server = configurationBuilder.isServerEnabled();
+        this.isRealTimeEnabled = configurationBuilder.isRealTimeEnabled();
         this.maxEpoch = configurationBuilder.getMaxEpoch();
         this.minError = configurationBuilder.getMinError();
         this.updater = configurationBuilder.getUpdater();

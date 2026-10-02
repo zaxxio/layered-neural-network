@@ -78,6 +78,8 @@ public class Layer implements Serializable {
                 return new ReLu();
             case SWISH:
                 return new Swish();
+            case IDENTITY:
+                return new Identity();
         }
         return null;
     }

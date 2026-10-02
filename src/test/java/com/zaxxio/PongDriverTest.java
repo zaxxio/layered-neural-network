@@ -15,7 +15,7 @@ import org.junit.Test;
 
 import java.util.Arrays;
 
-public class DriverTest {
+public class PongDriverTest {
 
     private static final double[][] XOR_INPUT = {
             {1, 1},
@@ -56,7 +56,7 @@ public class DriverTest {
                         .build())
                 .list()
                 .minError(0.00001)
-                .server(true)
+                .realtime(true)
                 .build();
 
         MultiLayerNetwork model = new MultiLayerNetwork(config);

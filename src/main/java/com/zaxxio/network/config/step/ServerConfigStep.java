@@ -25,5 +25,5 @@
 package com.zaxxio.network.config.step;
 
 public interface ServerConfigStep {
-    ConfigurationBuilderStep server(boolean enabled);
+    ConfigurationBuilderStep realtime(boolean enabled);
 }
